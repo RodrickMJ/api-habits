@@ -4,13 +4,16 @@ import cors from "cors";
 import { v4 as uuid } from "uuid";
 
 const app = express();
+
+/* ============================
+   MIDDLEWARE
+============================ */
 app.use(cors());
 app.use(express.json());
 
 /* ============================
    MODELOS
 ============================ */
-
 interface User {
     id: string;
     name: string;
@@ -39,9 +42,8 @@ interface HabitLog {
 
 /* ============================
    DATA EN MEMORIA
-⚠️ Serverless = se borra
+⚠️ Serverless = se reinicia
 ============================ */
-
 let users: User[] = [];
 let habits: Habit[] = [];
 let habitLogs: HabitLog[] = [];
@@ -49,7 +51,6 @@ let habitLogs: HabitLog[] = [];
 /* ============================
    UTILS
 ============================ */
-
 function calculateProgress(habitId: string): number {
     const logs = habitLogs.filter(l => l.habitId === habitId);
     if (logs.length === 0) return 0;
@@ -58,10 +59,17 @@ function calculateProgress(habitId: string): number {
 }
 
 /* ============================
-   USERS
+   ROUTER /api
 ============================ */
+const router = express.Router();
 
-app.post("/users/register", (req: Request, res: Response) => {
+/* ---------- ROOT ---------- */
+router.get("/", (_req, res) => {
+    res.send("Main API");
+});
+
+/* ---------- USERS ---------- */
+router.post("/users/register", (req: Request, res: Response) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -78,7 +86,7 @@ app.post("/users/register", (req: Request, res: Response) => {
     res.status(201).json({ data: user });
 });
 
-app.post("/users/access", (req: Request, res: Response) => {
+router.post("/users/access", (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     const user = users.find(
@@ -99,11 +107,8 @@ app.post("/users/access", (req: Request, res: Response) => {
     });
 });
 
-/* ============================
-   HABITS
-============================ */
-
-app.post("/habits", (req: Request, res: Response) => {
+/* ---------- HABITS ---------- */
+router.post("/habits", (req: Request, res: Response) => {
     const { title, description, frequency, days, userId } = req.body;
 
     if (!title || !frequency || !Array.isArray(days) || !userId) {
@@ -126,14 +131,14 @@ app.post("/habits", (req: Request, res: Response) => {
     res.status(201).json({ data: habit });
 });
 
-app.get("/users/:id/habits", (req: Request, res: Response) => {
+router.get("/users/:id/habits", (req: Request, res: Response) => {
     const data = habits.filter(
         h => h.userId === req.params.id && h.active
     );
     res.json({ data });
 });
 
-app.post("/habits/:id/complete", (req: Request, res: Response) => {
+router.post("/habits/:id/complete", (req: Request, res: Response) => {
     const habit = habits.find(h => h.id === req.params.id);
 
     if (!habit || !habit.active) {
@@ -161,12 +166,12 @@ app.post("/habits/:id/complete", (req: Request, res: Response) => {
     res.json({ data: habit });
 });
 
-app.get("/habits/:id/logs", (req: Request, res: Response) => {
+router.get("/habits/:id/logs", (req: Request, res: Response) => {
     const logs = habitLogs.filter(l => l.habitId === req.params.id);
     res.json({ data: logs });
 });
 
-app.put("/habits/:id", (req: Request, res: Response) => {
+router.put("/habits/:id", (req: Request, res: Response) => {
     const habit = habits.find(h => h.id === req.params.id);
     if (!habit) {
         return res.status(404).json({ msg: "Habit not found" });
@@ -176,7 +181,7 @@ app.put("/habits/:id", (req: Request, res: Response) => {
     res.json({ data: habit });
 });
 
-app.delete("/habits/:id", (req: Request, res: Response) => {
+router.delete("/habits/:id", (req: Request, res: Response) => {
     const habit = habits.find(h => h.id === req.params.id);
     if (!habit) {
         return res.status(404).json({ msg: "Habit not found" });
@@ -187,15 +192,11 @@ app.delete("/habits/:id", (req: Request, res: Response) => {
 });
 
 /* ============================
+   MONTAJE /api
+============================ */
+app.use("/api", router);
+
+/* ============================
    EXPORT PARA VERCEL
 ============================ */
-
-app.get("/api", (_req, res) => {
-    res.send("Main API");
-});
-
-
-export default function handler(req: any, res: any) {
-    app(req, res);
-}
-
+export default app;
