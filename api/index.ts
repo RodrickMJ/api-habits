@@ -190,9 +190,10 @@ app.delete("/habits/:id", (req: Request, res: Response) => {
    EXPORT PARA VERCEL
 ============================ */
 
-app.get('/', (_req, res) => {
-    res.send('Main API')
+app.get("/api", (_req, res) => {
+    res.send("Main API");
 });
+
 
 export default function handler(req: any, res: any) {
     app(req, res);
