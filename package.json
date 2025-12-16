@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev api/index.ts",
-    "build": "tsc",
+    "dev": "tsx watch api/index.ts",
     "start": "node dist/server.ts"
   },
   "keywords": [],
